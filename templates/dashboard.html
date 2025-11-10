@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Добро пожаловать, {{ session.username }}!</h1>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Всего файлов</h3>
+            <p class="stat-number">{{ total_files }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Использовано места</h3>
+            <p class="stat-number">{{ "%.2f"|format(total_size / 1024 / 1024) }} MB</p>
+        </div>
+    </div>
+
+    <div class="recent-files">
+        <h2>Последние файлы</h2>
+        {% if files %}
+            <div class="file-list">
+                {% for file in files %}
+                <div class="file-item">
+                    <span class="file-name">{{ file.original_filename }}</span>
+                    <span class="file-size">{{ "%.2f"|format(file.file_size / 1024) }} KB</span>
+                    <span class="file-date">{{ file.upload_date[:16] }}</span>
+                    <div class="file-actions">
+                        <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-small">Скачать</a>
+                        <a href="{{ url_for('share', file_id=file.id) }}" class="btn btn-small btn-secondary">Поделиться</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>У вас пока нет файлов. <a href="{{ url_for('upload') }}">Загрузите первый файл</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

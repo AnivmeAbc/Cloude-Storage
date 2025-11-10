@@ -1,0 +1,14 @@
+.aboltus-label {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    color: #b9aaaa;
+    font-size: 16px;
+    font-style: italic;
+    z-index: 1000;
+}
+
+
+<div class="aboltus-label">
+        Кузьмин Иван
+    </div>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="files-container">
+    <h1>Мои файлы</h1>
+    
+    {% if files %}
+        <div class="file-list">
+            {% for file in files %}
+            <div class="file-item">
+                <div class="file-info">
+                    <span class="file-name">{{ file.original_filename }}</span>
+                    <span class="file-size">{{ "%.2f"|format(file.file_size / 1024) }} KB</span>
+                    <span class="file-date">{{ file.upload_date[:16] }}</span>
+                </div>
+                <div class="file-actions">
+                    <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-small">Скачать</a>
+                    {% if file.is_public %}
+                        <span class="shared-badge">Общий</span>
+                    {% else %}
+                        <a href="{{ url_for('share', file_id=file.id) }}" class="btn btn-small btn-secondary">Поделиться</a>
+                    {% endif %}
+                    <a href="{{ url_for('delete', file_id=file.id) }}" class="btn btn-small btn-danger" 
+                       onclick="return confirm('Удалить файл?')">Удалить</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>У вас пока нет файлов. <a href="{{ url_for('upload') }}">Загрузите первый файл</a></p>
+    {% endif %}
+</div>
+{% endblock %}
