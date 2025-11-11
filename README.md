@@ -37,7 +37,7 @@ pip install Flask
 python app.py
 ```
 
-Приложение будет доступно по адресу: http://localhost:5000
+Приложение будет доступно по адресу: http://your-ip:port
 
 ## Структура проекта
 
