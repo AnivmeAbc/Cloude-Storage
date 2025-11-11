@@ -25,10 +25,6 @@
 # Создание виртуального окружения
 python -m venv venv
 
-# Активация виртуального окружения
-# Linux/Mac:
-source venv/bin/activate
-# Windows:
 venv\Scripts\activate
 
 # Установка зависимостей
