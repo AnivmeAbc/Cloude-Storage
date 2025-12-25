@@ -56,7 +56,7 @@ body {
 
 .flash-message {
     padding: 1rem;
-    background-color: #e74c3c;
+    background-color: #3ce74a;
     color: white;
     border-radius: 4px;
     margin-bottom: 0.5rem;
@@ -291,4 +291,5 @@ body {
     .file-actions {
         align-self: flex-end;
     }
+
 }
