@@ -1,39 +1,1310 @@
 {% extends "base.html" %}
 
+{% block title %}Cloud Drive{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reset and base styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #121212;
+        color: #e9ecef;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* Navigation */
+    .navbar {
+        background-color: #1a1a1a !important;
+        border-bottom: 1px solid #2d2d2d;
+        padding: 12px 0;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .navbar-brand {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-left: 16px;
+    }
+
+    /* Main layout */
+    .container-fluid {
+        padding: 0;
+        display: flex;
+        min-height: calc(100vh - 1000px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 280px;
+        background-color: #1a1a1a;
+        border-right: 1px solid #2d2d2d;
+        padding: 20px;
+        height: calc(100vh - 64px);
+        position: sticky;
+        top: 64px;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .sidebar-section {
+        margin-bottom: 25px;
+    }
+
+    .sidebar-title {
+        color: #adb5bd;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    /* Upload buttons */
+    .upload-btn {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .upload-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Current folder */
+    .current-folder {
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin: 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .current-folder i {
+        color: #ffc107;
+    }
+
+    /* Folders list */
+    .folder-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 5px;
+        color: #adb5bd;
+    }
+
+    .folder-item:hover {
+        background-color: #2d2d2d;
+        color: #fff;
+    }
+
+    .folder-item.active {
+        background-color: #2d2d2d;
+        color: #0d6efd;
+        font-weight: 500;
+    }
+
+    .folder-item i {
+        color: #ffc107;
+    }
+
+    /* Main content */
+    .main-content {
+        flex: 1;
+        padding: 25px;
+        background-color: #121212;
+        overflow-y: auto;
+        height: calc(100vh - 64px);
+    }
+
+    /* Files header */
+    .files-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #2d2d2d;
+    }
+
+    .files-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    /* Bulk actions */
+    .bulk-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #2d2d2d;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .bulk-actions.show {
+        display: flex;
+    }
+
+    .selected-count {
+        font-weight: 500;
+        color: #0d6efd;
+    }
+
+    /* Files list */
+    .files-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* File item */
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background-color: #1a1a1a;
+        border: 1px solid #2d2d2d;
+        border-radius: 8px;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .file-item:hover {
+        background-color: #2d2d2d;
+        border-color: #495057;
+        transform: translateX(2px);
+    }
+
+    .file-item.selected {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd;
+    }
+
+    /* Checkbox */
+    .file-checkbox {
+        margin-right: 15px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #0d6efd;
+    }
+
+    /* File icon/preview */
+    .file-preview {
+        width: 50px;
+        height: 50px;
+        margin-right: 15px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .file-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 6px;
+        background-color: #343a40;
+    }
+
+    .file-icon-large {
+        font-size: 2rem;
+        color: #0d6efd;
+    }
+
+    /* File info */
+    .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: #fff;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 1rem;
+    }
+
+    .file-details {
+        display: flex;
+        gap: 15px;
+        color: #adb5bd;
+        font-size: 0.85rem;
+    }
+
+    .file-size {
+        font-weight: 500;
+    }
+
+    .file-date {
+        color: #6c757d;
+    }
+
+    /* File actions */
+    .file-actions {
+        display: flex;
+        gap: 8px;
+        margin-left: 15px;
+        flex-shrink: 0;
+    }
+
+    .file-actions .btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h4 {
+        margin-bottom: 10px;
+        color: #adb5bd;
+    }
+
+    /* Search box */
+    .search-box {
+        width: 300px;
+    }
+
+    .search-box .form-control {
+        background-color: #2d2d2d;
+        border: 1px solid #495057;
+        color: #fff;
+    }
+
+    .search-box .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Progress section */
+    .upload-progress {
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    .upload-progress h6 {
+        margin-bottom: 10px;
+        color: #adb5bd;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .container-fluid {
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: static;
+            border-right: none;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .main-content {
+            height: auto;
+        }
+
+        .search-box {
+            width: 250px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .files-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .file-details {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .file-actions {
+            flex-direction: column;
+        }
+    }
+
+    /* Selection mode */
+    .selection-mode .file-actions {
+        display: none;
+    }
+
+    .selection-mode .file-item {
+        cursor: default;
+    }
+
+    .selection-mode .file-item:hover {
+        transform: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="dashboard">
-    <h1>Добро пожаловать, {{ session.username }}!</h1>
-    
-    <div class="stats">
-        <div class="stat-card">
-            <h3>Всего файлов</h3>
-            <p class="stat-number">{{ total_files }}</p>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <i class="bi bi-cloud-arrow-up-fill me-2"></i>Cloud Drive
+        </a>
+
+        <div class="d-flex align-items-center">
+            <!-- Storage Info -->
+            <div class="me-4">
+                <div class="storage-text text-muted" style="font-size: 0.8rem;">
+                    {{ used_storage }} / {{ total_storage }}
+                </div>
+                <div class="progress" style="width: 120px; height: 6px;">
+                    <div class="progress-bar {% if storage_percentage > 90 %}bg-danger{% endif %}"
+                         role="progressbar"
+                         style="width: {{ storage_percentage }}%">
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-outline-light dropdown-toggle show" type="button" data-bs-toggle="dropdown" aria-expanded="true" style="margin-right: 16px;width: 160.818182px;">
+                    <i class="bi bi-person-circle me-2"></i>{{ username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="left: -40; right: 16px;" data-bs-popper="static">
+                    <li><a class="dropdown-item text-danger" href="/logout">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Использовано места</h3>
-            <p class="stat-number">{{ "%.2f"|format(total_size / 1024 / 1024) }} MB</p>
+    </div>
+</nav>
+
+<!-- Main Layout -->
+<div class="container-fluid">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Upload Section -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Upload Files</div>
+
+            <button class="btn btn-primary upload-btn" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-upload me-2"></i>Upload Files
+            </button>
+            <input type="file" id="fileInput" multiple style="display: none;"
+                   onchange="handleFileUpload(this.files)">
+
+            <button class="btn btn-outline-warning upload-btn" onclick="showCreateFolderModal()">
+                <i class="bi bi-folder-plus me-2"></i>Create Folder
+            </button>
+        </div>
+
+        <!-- Current Folder -->
+        <div class="current-folder">
+            <i class="bi bi-folder2"></i>
+            <span id="currentFolderName">Main</span>
+        </div>
+
+        <!-- Folders Section -->
+        <div class="sidebar-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="sidebar-title">Folders</div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadFolders()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Root Folder -->
+            <div class="folder-item active" onclick="selectFolder('')">
+                <i class="bi bi-folder"></i>Main
+            </div>
+
+            <!-- Folders List -->
+            <div id="foldersList"></div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div class="upload-progress" id="uploadProgressSection" style="display: none;">
+            <h6>Upload Progress</h6>
+            <div class="progress mb-2">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar" style="width: 0%"></div>
+            </div>
+            <small id="progressText" class="text-muted"></small>
         </div>
     </div>
 
-    <div class="recent-files">
-        <h2>Последние файлы</h2>
-        {% if files %}
-            <div class="file-list">
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Files Header -->
+        <div class="files-header">
+            <h2 class="files-title">Files</h2>
+
+            <div class="d-flex align-items-center gap-3">
+                <!-- Select All Checkbox -->
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllCheckbox"
+                           style="width: 18px; height: 18px;" onclick="toggleSelectAll()">
+                    <label class="form-check-label text-muted ms-2" for="selectAllCheckbox">
+                        Select All
+                    </label>
+                </div>
+
+                <!-- Search Box -->
+                <div class="search-box">
+                    <div class="input-group">
+                        <input type="text" class="form-control"
+                               placeholder="Search files..." id="searchInput" onkeyup="searchFiles()">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <span class="selected-count" id="selectedCount">0 files selected</span>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedFiles()">
+                <i class="bi bi-trash me-1"></i>Delete Selected
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                Clear Selection
+            </button>
+        </div>
+
+        <!-- Files List -->
+        <div class="files-list" id="filesList">
+            {% if files %}
                 {% for file in files %}
-                <div class="file-item">
-                    <span class="file-name">{{ file.original_filename }}</span>
-                    <span class="file-size">{{ "%.2f"|format(file.file_size / 1024) }} KB</span>
-                    <span class="file-date">{{ file.upload_date[:16] }}</span>
+                <div class="file-item" data-file-id="{{ file.id }}" onclick="toggleFileSelection(event, {{ file.id }})">
+                    <!-- Checkbox -->
+                    <input type="checkbox" class="file-checkbox" id="fileCheckbox{{ file.id }}"
+                           onclick="event.stopPropagation(); toggleFileCheckbox({{ file.id }})">
+
+                    <!-- File Preview/Icon -->
+                    <div class="file-preview">
+                        {% if file.is_image and file.image_url %}
+                            <img src="{{ file.image_url }}"
+                                 class="file-thumbnail"
+                                 alt="{{ file.name }}"
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<i class=\'bi bi-{{ file.icon }} file-icon-large\'></i>';">
+                        {% else %}
+                            <i class="bi bi-{{ file.icon }} file-icon-large"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- File Info -->
+                    <div class="file-info">
+                        <div class="file-name">{{ file.name }}</div>
+                        <div class="file-details">
+                            <span class="file-size">{{ file.size }}</span>
+                            <span class="file-date">{{ file.uploaded_at[:10] if file.uploaded_at else '' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- File Actions -->
                     <div class="file-actions">
-                        <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-small">Скачать</a>
-                        <a href="{{ url_for('share', file_id=file.id) }}" class="btn btn-small btn-secondary">Поделиться</a>
+                        <button class="btn btn-outline-success btn-sm"
+                                onclick="event.stopPropagation(); downloadFile({{ file.id }})">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm"
+                                onclick="event.stopPropagation(); shareFile({{ file.id }}, {{ file.is_public|lower }}, '{{ file.public_token or '' }}')">
+                            <i class="bi bi-{{ 'share-fill' if file.is_public else 'share' }}"></i>
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
-            </div>
-        {% else %}
-            <p>У вас пока нет файлов. <a href="{{ url_for('upload') }}">Загрузите первый файл</a></p>
-        {% endif %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <i class="bi bi-folder-x"></i>
+                    <h4>No files yet</h4>
+                    <p class="text-muted">Upload your first file to get started</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="shareUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyShareUrl()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="shareToggle"
+                           onchange="toggleShare()">
+                    <label class="form-check-label" for="shareToggle">
+                        Enable public access
+                    </label>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Anyone with the link can download this file.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div class="modal fade" id="createFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="folderName" class="form-label">Folder Name</label>
+                    <input type="text" class="form-control" id="folderName"
+                           placeholder="Enter folder name">
+                </div>
+                <div id="folderError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createFolder()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="previewImage" src="" class="img-fluid rounded" alt="" style="max-height: 70vh; object-fit: contain;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="downloadImageBtn" href="#" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage">Are you sure you want to delete the selected files?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentFileId = null;
+let isFileShared = false;
+let currentShareToken = '';
+let currentFolder = ''; // Empty for root folder
+let selectedFiles = new Set(); // Set of selected file IDs
+let isSelectionMode = false;
+
+// Load folders on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadFolders();
+    updateBulkActions();
+
+    // Initialize file event listeners
+    initializeFileEventListeners();
+});
+
+// Load folders from server
+function loadFolders() {
+    fetch('/get-folders')
+        .then(response => response.json())
+        .then(data => {
+            const foldersList = document.getElementById('foldersList');
+            if (foldersList && data.folders) {
+                // Clear existing folders
+                foldersList.innerHTML = '';
+
+                // Add folders
+                data.folders.forEach(folder => {
+                    const folderDiv = document.createElement('div');
+                    folderDiv.className = 'folder-item';
+                    folderDiv.innerHTML = `
+                        <i class="bi bi-folder"></i>${folder}
+                    `;
+                    folderDiv.onclick = () => selectFolder(folder);
+                    foldersList.appendChild(folderDiv);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading folders:', error);
+        });
+}
+
+// Select folder
+function selectFolder(folderName) {
+    currentFolder = folderName;
+
+    // Clear selection when changing folders
+    clearSelection();
+
+    // Update active state
+    document.querySelectorAll('.folder-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // Mark selected folder as active
+    if (folderName === '') {
+        document.querySelector('.folder-item:first-child').classList.add('active');
+        document.getElementById('currentFolderName').textContent = 'Root Folder';
+    } else {
+        // Find and activate the clicked folder
+        const folderItems = document.querySelectorAll('.folder-item');
+        folderItems.forEach(item => {
+            if (item.textContent.trim() === folderName) {
+                item.classList.add('active');
+            }
+        });
+        document.getElementById('currentFolderName').textContent = folderName;
+    }
+
+    // Load files for this folder
+    loadFilesForFolder(folderName);
+}
+
+// Load files for specific folder
+function loadFilesForFolder(folderName) {
+    // Show loading state
+    const filesList = document.getElementById('filesList');
+    filesList.innerHTML = `
+        <div class="empty-state">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h4 class="mt-3">Loading files...</h4>
+        </div>
+    `;
+
+    // Fetch files for folder
+    const url = folderName === '' ? '/dashboard' : `/dashboard?folder=${encodeURIComponent(folderName)}`;
+
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            // Parse the HTML response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Extract files list
+            const newFilesList = doc.getElementById('filesList');
+
+            if (newFilesList) {
+                // Replace the files list
+                filesList.innerHTML = newFilesList.innerHTML;
+
+                // Reinitialize event listeners
+                initializeFileEventListeners();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading files:', error);
+            filesList.innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading files. Please try again.
+                    <button onclick="loadFilesForFolder('${folderName}')" class="btn btn-sm btn-outline-light ms-2">
+                        Retry
+                    </button>
+                </div>
+            `;
+        });
+}
+
+// Create new folder
+function showCreateFolderModal() {
+    const modal = new bootstrap.Modal(document.getElementById('createFolderModal'));
+    modal.show();
+}
+
+function createFolder() {
+    const folderName = document.getElementById('folderName').value.trim();
+    const errorDiv = document.getElementById('folderError');
+
+    // Reset error
+    errorDiv.classList.add('d-none');
+
+    if (!folderName) {
+        errorDiv.textContent = 'Folder name is required';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    // Basic validation
+    if (folderName.includes('/') || folderName.includes('\\') || folderName.includes('..')) {
+        errorDiv.textContent = 'Folder name cannot contain /, \\, or ..';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('folder_name', folderName);
+
+    // Show loading state
+    const createBtn = document.querySelector('#createFolderModal .btn-primary');
+    const originalText = createBtn.textContent;
+    createBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+    createBtn.disabled = true;
+
+    fetch('/create-folder', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh folders
+            bootstrap.Modal.getInstance(document.getElementById('createFolderModal')).hide();
+            document.getElementById('folderName').value = '';
+
+            // Refresh folder list
+            loadFolders();
+
+            // Show success message
+            showAlert('Folder created successfully!', 'success');
+        } else {
+            errorDiv.textContent = data.error || 'Failed to create folder';
+            errorDiv.classList.remove('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('Create folder error:', error);
+        errorDiv.textContent = 'Network error. Please try again.';
+        errorDiv.classList.remove('d-none');
+    })
+    .finally(() => {
+        // Reset button state
+        createBtn.innerHTML = originalText;
+        createBtn.disabled = false;
+    });
+}
+
+// Handle file upload
+function handleFileUpload(files) {
+    const progressSection = document.getElementById('uploadProgressSection');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    progressSection.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '';
+
+    let uploaded = 0;
+    let totalFiles = files.length;
+
+    Array.from(files).forEach((file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Add current folder
+        if (currentFolder) {
+            formData.append('folder', currentFolder);
+        }
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            uploaded++;
+
+            // Update progress
+            const progress = (uploaded / totalFiles) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `Uploading ${uploaded}/${totalFiles}: ${file.name}`;
+
+            if (data.success) {
+                // Show success message
+                showAlert(`${file.name} uploaded successfully!`, 'success');
+
+                // Refresh page after all uploads
+                if (uploaded === totalFiles) {
+                    progressText.textContent = 'Upload complete! Refreshing...';
+                    setTimeout(() => {
+                        loadFilesForFolder(currentFolder);
+                        progressSection.style.display = 'none';
+                    }, 1000);
+                }
+            } else {
+                // Show error message
+                showAlert(`${file.name}: ${data.error}`, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            uploaded++;
+            showAlert(`${file.name}: Upload failed`, 'danger');
+        });
+    });
+}
+
+// File actions
+function downloadFile(fileId) {
+    window.location.href = `/download/${fileId}`;
+}
+
+function shareFile(fileId, isShared, token) {
+    currentFileId = fileId;
+    isFileShared = (isShared === 'true');
+    currentShareToken = token || '';
+
+    const shareUrlInput = document.getElementById('shareUrl');
+    const shareToggle = document.getElementById('shareToggle');
+
+    if (isFileShared && currentShareToken) {
+        shareUrlInput.value = `${window.location.origin}/public/${currentShareToken}`;
+        shareToggle.checked = true;
+    } else {
+        shareUrlInput.value = 'Enable sharing to generate link';
+        shareToggle.checked = false;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+    modal.show();
+}
+
+function toggleShare() {
+    const shareToggle = document.getElementById('shareToggle');
+    const shareUrlInput = document.getElementById('shareUrl');
+
+    if (shareToggle.checked && !isFileShared) {
+        // Enable sharing
+        fetch(`/share/${currentFileId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                shareUrlInput.value = data.share_url;
+                isFileShared = true;
+                currentShareToken = data.token;
+                showAlert('File sharing enabled!', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Share error:', error);
+            shareToggle.checked = false;
+            showAlert('Failed to enable sharing', 'danger');
+        });
+    } else if (!shareToggle.checked && isFileShared) {
+        // Disable sharing
+        fetch(`/share/${currentFileId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                shareUrlInput.value = 'Enable sharing to generate link';
+                isFileShared = false;
+                currentShareToken = '';
+                showAlert('File sharing disabled!', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Unshare error:', error);
+            shareToggle.checked = true;
+            showAlert('Failed to disable sharing', 'danger');
+        });
+    }
+}
+
+function copyShareUrl() {
+    const shareUrlInput = document.getElementById('shareUrl');
+    if (shareUrlInput.value && shareUrlInput.value !== 'Enable sharing to generate link') {
+        shareUrlInput.select();
+        document.execCommand('copy');
+
+        // Visual feedback
+        const copyBtn = shareUrlInput.nextElementSibling;
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        copyBtn.classList.remove('btn-outline-secondary');
+        copyBtn.classList.add('btn-success');
+
+        setTimeout(() => {
+            copyBtn.innerHTML = originalHtml;
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }
+}
+
+// File selection functions
+function toggleFileSelection(event, fileId) {
+    // Don't toggle selection if clicking on checkbox or buttons
+    if (event.target.type === 'checkbox' || event.target.closest('button')) {
+        return;
+    }
+
+    toggleFileCheckbox(fileId);
+}
+
+function toggleFileCheckbox(fileId) {
+    const checkbox = document.getElementById(`fileCheckbox${fileId}`);
+    const fileItem = checkbox.closest('.file-item');
+
+    if (checkbox.checked) {
+        selectedFiles.add(fileId);
+        fileItem.classList.add('selected');
+    } else {
+        selectedFiles.delete(fileId);
+        fileItem.classList.remove('selected');
+    }
+
+    updateBulkActions();
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const fileCheckboxes = document.querySelectorAll('.file-checkbox');
+    const fileItems = document.querySelectorAll('.file-item');
+
+    if (selectAllCheckbox.checked) {
+        // Select all files
+        fileCheckboxes.forEach((checkbox, index) => {
+            const fileId = checkbox.id.replace('fileCheckbox', '');
+            checkbox.checked = true;
+            selectedFiles.add(parseInt(fileId));
+            fileItems[index].classList.add('selected');
+        });
+    } else {
+        // Deselect all files
+        fileCheckboxes.forEach((checkbox, index) => {
+            const fileId = checkbox.id.replace('fileCheckbox', '');
+            checkbox.checked = false;
+            selectedFiles.delete(parseInt(fileId));
+            fileItems[index].classList.remove('selected');
+        });
+    }
+
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+    // Update count
+    const count = selectedFiles.size;
+    selectedCount.textContent = `${count} file${count !== 1 ? 's' : ''} selected`;
+
+    // Show/hide bulk actions
+    if (count > 0) {
+        bulkActions.classList.add('show');
+        document.body.classList.add('selection-mode');
+    } else {
+        bulkActions.classList.remove('show');
+        document.body.classList.remove('selection-mode');
+    }
+
+    // Update select all checkbox
+    const fileCheckboxes = document.querySelectorAll('.file-checkbox');
+    if (fileCheckboxes.length > 0) {
+        const allChecked = Array.from(fileCheckboxes).every(cb => cb.checked);
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = count > 0 && !allChecked;
+    }
+}
+
+function clearSelection() {
+    selectedFiles.clear();
+    document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('.file-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    updateBulkActions();
+}
+
+function deleteSelectedFiles() {
+    if (selectedFiles.size === 0) return;
+
+    const fileCount = selectedFiles.size;
+    const deleteMessage = document.getElementById('deleteMessage');
+
+    if (fileCount === 1) {
+        deleteMessage.textContent = 'Are you sure you want to delete this file?';
+    } else {
+        deleteMessage.textContent = `Are you sure you want to delete ${fileCount} files?`;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+}
+
+function confirmDelete() {
+    const fileIds = Array.from(selectedFiles);
+    let deletedCount = 0;
+    let totalToDelete = fileIds.length;
+
+    // Show loading state
+    const deleteBtn = document.querySelector('#deleteConfirmModal .btn-danger');
+    const originalText = deleteBtn.textContent;
+    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+    deleteBtn.disabled = true;
+
+    // Delete files one by one
+    fileIds.forEach(fileId => {
+        fetch(`/delete/${fileId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            deletedCount++;
+
+            if (data.success) {
+                // Remove from selected files
+                selectedFiles.delete(fileId);
+
+                // Remove from DOM
+                const fileItem = document.querySelector(`[data-file-id="${fileId}"]`);
+                if (fileItem) {
+                    fileItem.remove();
+                }
+            }
+
+            // When all deletions are done
+            if (deletedCount === totalToDelete) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+
+                // Reset button
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+
+                // Update bulk actions
+                updateBulkActions();
+
+                // Show success message
+                showAlert(`${deletedCount} file${deletedCount !== 1 ? 's' : ''} deleted successfully!`, 'success');
+
+                // If no files left, reload the folder
+                const remainingFiles = document.querySelectorAll('.file-item').length;
+                if (remainingFiles === 0) {
+                    setTimeout(() => loadFilesForFolder(currentFolder), 500);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            deletedCount++;
+
+            if (deletedCount === totalToDelete) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+                showAlert('Some files could not be deleted', 'danger');
+            }
+        });
+    });
+}
+
+// Search files
+function searchFiles() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const fileItems = document.querySelectorAll('.file-item');
+
+    fileItems.forEach(item => {
+        const fileName = item.querySelector('.file-name').textContent.toLowerCase();
+        if (fileName.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Image preview
+function previewImage(fileId, filename) {
+    const imageUrl = `/image/${fileId}`;
+    const previewImage = document.getElementById('previewImage');
+    const imagePreviewTitle = document.getElementById('imagePreviewTitle');
+    const downloadImageBtn = document.getElementById('downloadImageBtn');
+
+    // Set image with cache busting
+    previewImage.src = imageUrl + '?t=' + new Date().getTime();
+    imagePreviewTitle.textContent = filename;
+    downloadImageBtn.href = `/download/${fileId}`;
+
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+}
+
+// Show alert
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 150);
+    }, 3000);
+}
+
+// Initialize file event listeners
+function initializeFileEventListeners() {
+    // Click file item (excluding checkboxes and buttons)
+    const fileItems = document.querySelectorAll('.file-item');
+    fileItems.forEach(item => {
+        const fileId = item.dataset.fileId;
+        const fileName = item.querySelector('.file-name').textContent;
+
+        // Add click handler for the entire item
+        item.addEventListener('click', (e) => {
+            if (!e.target.closest('button') && e.target.type !== 'checkbox') {
+                toggleFileSelection(e, parseInt(fileId));
+            }
+        });
+
+        // Double click to open/preview
+        item.addEventListener('dblclick', (e) => {
+            if (!e.target.closest('button') && e.target.type !== 'checkbox') {
+                // Check if it's an image
+                const img = item.querySelector('img.file-thumbnail');
+                if (img && img.src) {
+                    previewImage(parseInt(fileId), fileName);
+                } else {
+                    // For non-images, download
+                    downloadFile(parseInt(fileId));
+                }
+            }
+        });
+    });
+
+    // Lazy loading for images
+    const lazyImages = document.querySelectorAll('img.file-thumbnail');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                // Add cache busting to ensure fresh load
+                if (!img.src.includes('?')) {
+                    img.src = img.getAttribute('src') + '?t=' + new Date().getTime();
+                }
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => {
+        imageObserver.observe(img);
+    });
+}
+
+// Drag & drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dropArea = document.querySelector('.main-content');
+
+    if (dropArea) {
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+
+            if (e.dataTransfer.files.length) {
+                handleFileUpload(e.dataTransfer.files);
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
