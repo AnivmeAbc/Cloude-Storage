@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Shared File - Cloud Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-file-earmark-arrow-down display-1 text-primary"></i>
+                    
+                    <h3 class="mt-4">{{ file.original_filename }}</h3>
+                    
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            File shared via Cloud Drive
+                        </p>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <a href="{{ url_for('download', file_id=file.id) }}" 
+                               class="btn btn-primary btn-lg">
+                                <i class="bi bi-download"></i> Download File
+                            </a>
+                            
+                            <a href="{{ url_for('auth_page') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-cloud-arrow-up-fill"></i> Get Your Own Cloud Drive
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-muted small">
+                        <p>
+                            <i class="bi bi-shield-check"></i>
+                            This file has been scanned for security
+                        </p>
+                        <p>Downloads: {{ file.download_count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
