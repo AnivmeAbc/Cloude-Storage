@@ -68,3 +68,6 @@ cloud_storage/
     │   └── style.css     # Стили приложения
     └── uploads/          # Папка для хранения файлов
 ```
+
+
+<img width="1913" height="947" alt="image" src="https://github.com/user-attachments/assets/be10f5a6-2d79-4fea-8ba6-f24eed556941" />
